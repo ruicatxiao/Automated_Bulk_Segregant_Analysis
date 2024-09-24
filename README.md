@@ -42,10 +42,13 @@ ggplot2 readr
 
 ## Installation
 
-git clone https://github.com/ruicatxiao/Automated_Bulk_Segregant_Analysis.git
-chmod u+x AutomatedBSA.py
-chmod u+x bin/scatter_plot_snp_location.py
-chmod u+x bin/BSA_R_Preprocessing.R
+- git clone https://github.com/ruicatxiao/Automated_Bulk_Segregant_Analysis.git
+
+- chmod u+x AutomatedBSA.py
+
+- chmod u+x bin/scatter_plot_snp_location.py
+
+- chmod u+x bin/BSA_R_Preprocessing.R
 
 ## Prepare data
 Follow the provided samplesheet.csv file in the repo and place read files into raw_reads folder, update samplesheet.csv to reflect changes. You do not need to provide absolute path to read files
