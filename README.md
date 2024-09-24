@@ -70,12 +70,12 @@ All final output tables are lcoated in "tables" folder. All generated plots file
 
 ## Credits
 
-ABSA is developed and implemented by Rui Xiao and Sebastian Shaw
+ABSA is conceptualized by Sebastian Shaw and Rui Xiao. The pipeline is developed and implemented by Rui Xiao.
 
-We thank Xue Li for implementing the original BSA where ABSA is based on. 
+We thank Xue Li for implementing the original BSA, which ABSA is based upon
 
 ## Citations
 
-=====PLACE HOLDER FOR SEBASTIAN's PAPER=======
+=====PLACE HOLDER FOR STRIPEN GROUP PUBLICATION CITATION USING ABSA=======
 
 Brenneman KV, Li X, Kumar S, Delgado E, Checkley LA, Shoue DA, Reyes A, Abatiyow BA, Haile MT, Tripura R, Peto T, Lek D, Button-Simons KA, Kappe SHI, Dhorda M, Nosten F, Nkhoma SC, Cheeseman IH, Vaughan AM, Ferdig MT, Anderson TJC. Optimizing bulk segregant analysis of drug resistance using Plasmodium falciparum genetic crosses conducted in humanized mice. iScience. 2022 Mar 16;25(4):104095. doi: 10.1016/j.isci.2022.104095. PMID: 35372813; PMCID: PMC8971943.
