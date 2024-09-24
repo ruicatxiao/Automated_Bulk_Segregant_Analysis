@@ -60,7 +60,10 @@ You should have a reference genome in fasta, a samplesheet.csv and the raw_reads
 python3 AutomatedBSA.py \
 --ref <GENOME_REFERENCE.fasta> \
 --sample samplesheet.csv \
---threads <INT>
+--threads <NUMBER_OF_CPU_THREADS>
+
+- CpBGF genome is provided by default. replace this with any other Cryptosporidum genome as needed
+
 
 ## Output
 All final output tables are lcoated in "tables" folder. All generated plots file are located in "plots" folder
