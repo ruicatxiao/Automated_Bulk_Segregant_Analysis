@@ -73,7 +73,7 @@ All final output tables are located in "tables" folder. All generated plots file
 - Outlier SNPs removal via median absolute deviation (MAD)
 - TriCube smoothing of SNP frequency distribution
 - QTLSeqR processing, g-prime calculation and plotting
-- nf-core adaptation to remove local depdenency requirements
+- nf-core adaptation to remove local dependency requirements
 
 ## Credits
 
