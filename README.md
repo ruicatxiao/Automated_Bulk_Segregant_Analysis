@@ -5,7 +5,7 @@
 
 ## Description
 
-Automated Bulk Segregant Analysis (ABSA) is a pipeline designed to streamline the Bulk Segregant Analysis (BSA) workflow for Cryptosporidium crossings genomic data. It automates a series of bioinformatics tools and processes, enhancing efficiency, reproducibility, and scalability. This pipeline is a streamlined implementation of Dr. Xue Li's BSA analysis. Bulk segregant analysis is a technique for identifying the genetic loci that underlie phenotypic trait differences. The basic approach is to compare two pools of individuals from the opposing tails of the phenotypic distribution, sampled from an interbred population. 
+Automated Bulk Segregant Analysis (ABSA) is a pipeline designed to streamline the Bulk Segregant Analysis (BSA) workflow for Cryptosporidium crossings genomic data. It automates a series of bioinformatics tools and processes, enhancing efficiency, reproducibility, and scalability. This pipeline is a streamlined implementation of Dr. Xue Li's BSA analysis. Bulk segregant analysis is a technique for identifying the genetic loci that underlie phenotypic trait differences. The basic approach is to compare two pools of individuals from the opposing tails of the phenotypic distribution, sampled from an interbred population. This pipeline takes input all the way to allele freq table generation and plotting for all valid SNPs.
 
 ## Features
 
@@ -66,7 +66,14 @@ python3 AutomatedBSA.py \
 
 
 ## Output
-All final output tables are lcoated in "tables" folder. All generated plots file are located in "plots" folder
+All final output tables are located in "tables" folder. All generated plots file are located in "plots" folder
+
+
+## In Development
+- Outlier SNPs removal via median absolute deviation (MAD)
+- TriCube smoothing of SNP frequency distribution
+- QTLSeqR processing, g-prime calculation and plotting
+- nf-core adaptation to remove local depdenency requirements
 
 ## Credits
 
