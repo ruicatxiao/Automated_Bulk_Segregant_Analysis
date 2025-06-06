@@ -288,6 +288,6 @@ Original BSA algorithm was developped by Xue Li.
 
 ## Citations
 
-=====PLACE HOLDER FOR STRIPEN GROUP PUBLICATION CITATION USING ABSA=======
+Shaw, S., Li, X., Buenconsejo, G. Y., Tiffany, Z. H., Cohen, A., Yasur, D., Xiao, R., Beiting, D. P., Anderson, T. J., & Striepen, B. (2025). Genetic crosses reveal genomic loci responsible for virulence in Cryptosporidium parvum infection. bioRxiv (Cold Spring Harbor Laboratory). https://doi.org/10.1101/2025.05.20.655157
 
 Brenneman KV, Li X, Kumar S, Delgado E, Checkley LA, Shoue DA, Reyes A, Abatiyow BA, Haile MT, Tripura R, Peto T, Lek D, Button-Simons KA, Kappe SHI, Dhorda M, Nosten F, Nkhoma SC, Cheeseman IH, Vaughan AM, Ferdig MT, Anderson TJC. Optimizing bulk segregant analysis of drug resistance using Plasmodium falciparum genetic crosses conducted in humanized mice. iScience. 2022 Mar 16;25(4):104095. doi: 10.1016/j.isci.2022.104095. PMID: 35372813; PMCID: PMC8971943.
