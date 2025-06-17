@@ -282,7 +282,7 @@ All final output tables are located in "tables" folder. All generated plots file
 
 
 ## Manuscript Abstract
-<PLACE HOLDER>
+"PLACE HOLDER"
 
 ## Credits
 
