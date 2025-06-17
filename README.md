@@ -281,8 +281,8 @@ All final output tables are located in "tables" folder. All generated plots file
 - Adding more functions to R post-processing scripts
 
 
-## Manuscript Abstract
-"PLACE HOLDER"
+## Abstract
+The relationship between parasite genotype and pathogenesis is largely unknown for Cryptosporidium, a leading cause of diarrheal disease in children. An array of parasites with similar genomes produces varied disease outcomes in different hosts. Here, we isolate and characterize Cryptosporidium parvum strains that show marked differences in virulence and persistence in mice. Taking advantage of the sexual lifecycle of this eukaryotic pathogen, we use genetic crosses to discover the underlying chromosomal loci. Whole-genome sequencing and bulk segregant analysis of infection selected progeny mapped three loci on chromosomes 2, 6, and 7 associated with the ability to colonize and persist in mice and the positions of drug resistance genes. The chromosome 6 locus encodes the hyper-polymorphic surface glycoprotein GP60. Reverse genetic studies in both parental strains demonstrate that GP60 controls parasite burden and virulence, but not persistence, and reveal the dominance of the less virulent allele, suggesting it restricts virulence.
 
 ## Credits
 
