@@ -280,6 +280,10 @@ All final output tables are located in "tables" folder. All generated plots file
 ## In Development
 - Adding more functions to R post-processing scripts
 
+
+## Manuscript Abstract
+<PLACE HOLDER>
+
 ## Credits
 
 ABSA is conceptualized by Sebastian Shaw and Rui Xiao. The pipeline is developed and implemented by Rui Xiao.
