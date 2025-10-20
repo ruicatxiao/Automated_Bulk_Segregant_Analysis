@@ -164,6 +164,76 @@ echo 'export PATH="$PATH:$HOME/singularity/images/"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
+### Conda Installation
+Good for desktop  / laptop installation that requires easier package version controls
+
+#### System Dependencies
+Make sure miniconda is installed
+
+#### Create conda env for ABSA
+```bash
+conda create -n absa python=3.10.11
+
+conda activate absa
+
+
+conda install \
+    trim-galore \
+    bwa \
+    samtools \
+    gatk4 \
+    vcflib \
+    r-base
+
+conda install \
+    pandas \
+    matplotlib
+
+pip install pyfiglet colorama tqdm
+
+
+conda install \
+    r-ggplot2 \
+    r-readr
+
+```
+
+#### Clone and set up ABSA
+```bash
+git clone https://github.com/ruicatxiao/Automated_Bulk_Segregant_Analysis.git
+
+cd Automated_Bulk_Segregant_Analysis/
+
+chmod u+x AutomatedBSA.py
+chmod u+x scatter_plot_snp_location.py
+chmod u+x BSA_R_Preprocessing.R
+
+```
+
+#### Verify installations
+```bash
+which python
+python --version
+
+trim_galore --version
+bwa
+samtools --version
+gatk --version
+vcffilter -h
+R --version
+
+```
+
+#### Usage
+```bash
+conda activate absa
+
+python3 AutomatedBSA.py \
+    --ref <GENOME_REFERENCE.fasta> \
+    --sample samplesheet.csv \
+    --threads <NUMBER_OF_CPU_THREADS>
+```
+
 ## Usage
 - T2TCpBGF genome is provided by default. replace this with any other Cryptosporidum genome as needed
 
