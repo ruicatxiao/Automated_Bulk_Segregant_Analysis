@@ -232,8 +232,7 @@ R --version
 python3 AutomatedBSA.py \
     --ref <GENOME_REFERENCE.fasta> \
     --sample samplesheet.csv \
-    --threads <NUMBER_OF_CPU_THREADS> \
- > /dev/null 2>&1 & # Redirect output and run in background
+    --threads <NUMBER_OF_CPU_THREADS> 
 ```
 
 ### Manual and Conda Installation Execution in the background
@@ -241,7 +240,8 @@ python3 AutomatedBSA.py \
 nohup python3 AutomatedBSA.py \
     --ref <GENOME_REFERENCE.fasta> \
     --sample samplesheet.csv \
-    --threads <NUMBER_OF_CPU_THREADS>
+    --threads <NUMBER_OF_CPU_THREADS> \
+ > /dev/null 2>&1 & # Redirect output and run in background
 ```
 
 ### Singularity Image Execution
