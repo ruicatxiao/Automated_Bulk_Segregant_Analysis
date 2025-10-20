@@ -224,25 +224,24 @@ R --version
 
 ```
 
-#### Usage
-```bash
-conda activate absa
-
-python3 AutomatedBSA.py \
-    --ref <GENOME_REFERENCE.fasta> \
-    --sample samplesheet.csv \
-    --threads <NUMBER_OF_CPU_THREADS>
-```
-
 ## Usage
 - T2TCpBGF genome is provided by default. replace this with any other Cryptosporidum genome as needed
 
-### Manual Installation Execution
+### Manual and Conda Installation Execution
 ```bash
 python3 AutomatedBSA.py \
---ref <GENOME_REFERENCE.fasta> \
---sample samplesheet.csv \
---threads <NUMBER_OF_CPU_THREADS>
+    --ref <GENOME_REFERENCE.fasta> \
+    --sample samplesheet.csv \
+    --threads <NUMBER_OF_CPU_THREADS> \
+ > /dev/null 2>&1 & # Redirect output and run in background
+```
+
+### Manual and Conda Installation Execution in the background
+```bash
+nohup python3 AutomatedBSA.py \
+    --ref <GENOME_REFERENCE.fasta> \
+    --sample samplesheet.csv \
+    --threads <NUMBER_OF_CPU_THREADS>
 ```
 
 ### Singularity Image Execution
@@ -273,7 +272,7 @@ Follow the provided samplesheet.csv file in the repo and place read files into r
 
 You should have a reference genome in fasta, a samplesheet.csv and the raw_reads folder containing all reads
 
-- Manual Installation Required Input Folder Structure
+- Manual and Conda Installation Required Input Folder Structure
 
 ```text
 Automated_Bulk_Segregant_Analysis/
