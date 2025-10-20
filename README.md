@@ -1,6 +1,6 @@
 # Automated Bulk Segregant Analysis (ABSA)
 
-![Image](https://github.com/user-attachments/assets/13a09f0a-6cfe-452a-95ae-2bd781413439)
+![Image](https://github.com/user-attachments/assets/ee72028a-5919-40c3-a654-0b8e1aa14600)
 
 ## Description
 
