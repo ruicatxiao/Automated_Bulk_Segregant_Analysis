@@ -185,11 +185,7 @@ conda install \
     vcflib \
     r-base
 
-conda install \
-    pandas \
-    matplotlib
-
-pip install pyfiglet colorama tqdm
+pip install pyfiglet colorama tqdm pandas matplotlib
 
 
 conda install \
