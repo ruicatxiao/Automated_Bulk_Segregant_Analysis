@@ -200,6 +200,7 @@ git clone https://github.com/ruicatxiao/Automated_Bulk_Segregant_Analysis.git
 
 cd Automated_Bulk_Segregant_Analysis/
 
+# <OPTIONAL> Check to make sure scripts can be executed
 chmod u+x AutomatedBSA.py
 chmod u+x scatter_plot_snp_location.py
 chmod u+x BSA_R_Preprocessing.R
@@ -357,6 +358,6 @@ Original BSA algorithm was developped by Xue Li.
 
 ## Citations
 
-Shaw, S., Li, X., Buenconsejo, G. Y., Tiffany, Z. H., Cohen, A., Yasur, D., Xiao, R., Beiting, D. P., Anderson, T. J., & Striepen, B. (2025). Genetic crosses reveal genomic loci responsible for virulence in Cryptosporidium parvum infection. bioRxiv (Cold Spring Harbor Laboratory). https://doi.org/10.1101/2025.05.20.655157
+Shaw, S., Li, X., Buenconsejo, G. Y., Zhou, T. H., Cohen, A., Yasur-Landau, D., Xiao, R., Beiting, D. P., Anderson, T. J. C., & Striepen, B. (2025). Genetic crosses reveal genomic loci responsible for virulence in Cryptosporidium parvum infection. Cell reports, 44(10), 116315. Advance online publication. https://doi.org/10.1016/j.celrep.2025.116315
 
-Brenneman KV, Li X, Kumar S, Delgado E, Checkley LA, Shoue DA, Reyes A, Abatiyow BA, Haile MT, Tripura R, Peto T, Lek D, Button-Simons KA, Kappe SHI, Dhorda M, Nosten F, Nkhoma SC, Cheeseman IH, Vaughan AM, Ferdig MT, Anderson TJC. Optimizing bulk segregant analysis of drug resistance using Plasmodium falciparum genetic crosses conducted in humanized mice. iScience. 2022 Mar 16;25(4):104095. doi: 10.1016/j.isci.2022.104095. PMID: 35372813; PMCID: PMC8971943.
+Brenneman, K. V., Li, X., Kumar, S., Delgado, E., Checkley, L. A., Shoue, D. A., Reyes, A., Abatiyow, B. A., Haile, M. T., Tripura, R., Peto, T., Lek, D., Button-Simons, K. A., Kappe, S. H. I., Dhorda, M., Nosten, F., Nkhoma, S. C., Cheeseman, I. H., Vaughan, A. M., Ferdig, M. T., … Anderson, T. J. C. (2022). Optimizing bulk segregant analysis of drug resistance using Plasmodium falciparum genetic crosses conducted in humanized mice. iScience, 25(4), 104095. https://doi.org/10.1016/j.isci.2022.104095
