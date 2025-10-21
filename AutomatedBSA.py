@@ -208,25 +208,44 @@ def map_reads(df, ref_genome, output_dir, threads, pbar):
         sample = row['sampleName']
         trimmed_r1 = Path(row['trimmed_read1'])
         trimmed_r2 = Path(row['trimmed_read2'])
-        rg = f"@RG\\tID:{sample}\\tLB:{sample}\\tPL:ILLUMINA\\tPM:HISEQ\\tSM:{sample}/"
+        rg = f"@RG\tID:{sample}\tLB:{sample}\tPL:ILLUMINA\tPM:HISEQ\tSM:{sample}"
         sam_output = output_dir / 'sam_bam' / f"{sample}.sam"
         command = [
             "bwa", "mem",
             "-t", str(threads),
-            str(ref_genome),
-            str(trimmed_r1),
-            str(trimmed_r2),
-            "-M",
-            "-R", rg
+            "-M", 
+            "-R", rg, 
+            str(ref_genome), 
+            str(trimmed_r1), 
+            str(trimmed_r2) 
         ]
-        with open(sam_output, 'w') as f:
-            logging.info(f"Running command: {' '.join(command)}")
-            process = subprocess.Popen(command, stdout=f, stderr=subprocess.PIPE, text=True)
-            _, stderr = process.communicate()
+        
+        logging.info(f"Running command for sample {sample}: {' '.join(command)}")
+        try:
+            process = subprocess.Popen(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+
+            with open(sam_output, 'w') as f:
+                for line in process.stdout:
+                    f.write(line)
+                _, stderr_output = process.communicate() 
+
             if process.returncode != 0:
-                logging.error(f"BWA MEM failed for sample {sample}: {stderr}")
+                logging.error(f"BWA MEM failed for sample {sample}:\n{stderr_output}")
+                logging.debug(f"Failed command was: {' '.join(command)}")
                 sys.exit(1)
-        logging.info(f"Mapped reads for sample {sample}, SAM saved to {sam_output}")
+            
+            logging.info(f"Mapped reads for sample {sample}, SAM saved to {sam_output}")
+            
+        except Exception as e:
+            logging.error(f"Exception occurred while running BWA MEM for sample {sample}: {e}")
+            logging.debug(f"Failed command was: {' '.join(command)}")
+            sys.exit(1)
+            
         if pbar:
             pbar.update(1)
 
@@ -672,7 +691,7 @@ def main():
         run_post_processing(output_dir, pbar)
         organize_output_files(output_dir, pbar)
 
-    logging.info("Automated BSA Workflow Completed Successfully")
+    logging.info("Automated BSA Workflow Completed Successfully, Goodbye Now ~ ")
 
 
 if __name__ == "__main__":
