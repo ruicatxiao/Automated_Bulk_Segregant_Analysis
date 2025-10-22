@@ -44,6 +44,8 @@ Version update Jan-30-2025: now added singularity installation instructions, whi
 - **Post-Processing**: Generates plots and tables for downstream analysis.
 - **Organized Outputs**: Automatically organizes output tasble and plot files into designated folders (`tables` and `plots`).
 - **Comprehensive Logging**: Logs detailed workflow progress and errors to both the console and a log file (`AutomatedBSA.log`).
+- **Robust Input Handling**: Robust input handling. Now able to handle genome input in multiple suffix, same for fastq input
+- **Resuming from failed run**: Pipeline now scanns for intermediate outputs, if files are generated already, that step will be skipped
 
 ## Installations and Requirements
 

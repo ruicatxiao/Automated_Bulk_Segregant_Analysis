@@ -65,14 +65,6 @@ unique(refFre.AD$CHROM)
 
 RefFreADdim <- dim(refFre.AD)
 
-# Write the processed data to a CSV file if needed
-# write.csv(
-#  cbind(refFre.AD, DP[1:RefFreADdim[1], ]),
-#  file = paste0(input_file_base, ".BSA.refFre.AD.csv"),
-#  row.names = FALSE
-# )
-
-
 # Write the processed data to a TSV file if needed
 write.table(
   cbind(refFre.AD, DP[1:RefFreADdim[1], ]),
@@ -85,25 +77,97 @@ write.table(
 # Remove rows with missing values
 refFre.AD <- refFre.AD[complete.cases(refFre.AD), ]
 
-# Generate plots for each sample column starting from column 5, which is the start of bulk sample data
+# Check if there's any data left after filtering
+if (nrow(refFre.AD) == 0) {
+  cat("Warning: No data points left after filtering for plotting.\n")
+  quit(status = 0) # Exit gracefully
+}
+
+# Generate plots for each sample column starting from column 5
 for (i in 5:ncol(refFre.AD)) {
   colname_i <- colnames(refFre.AD)[i]
-  p <- ggplot(data = refFre.AD) +
-    scale_x_continuous(
-      breaks = seq(
-        from = 0,
-        to = max(refFre.AD$POS),
-        by = 10^(floor(log10(max(refFre.AD$POS))))
-      ),
-      labels = format_genomic()
-    ) +
+  cat("Processing column:", colname_i, "\n") # Print current column being processed
+
+  # Check if the current sample column has any non-NA values
+  sample_data <- refFre.AD[[colname_i]]
+  if (all(is.na(sample_data))) {
+    cat("  Skipping", colname_i, "as all values are NA.\n")
+    next # Move to the next sample
+  }
+
+  # Subset data to remove NA values for the current sample
+  plot_data <- refFre.AD[!is.na(sample_data), ]
+
+  # Check if there's sufficient data for plotting after removing NAs
+  if (nrow(plot_data) == 0) {
+    cat("  Skipping", colname_i, "as no non-NA data points remain after filtering.\n")
+    next
+  }
+
+  # Check if there are enough unique POS values for the smoothing polynomial
+  unique_pos_count <- length(unique(plot_data$POS))
+  required_points_for_poly <- 8 + 1 # degree 8 polynomial needs at least 9 unique points
+  if (unique_pos_count < required_points_for_poly) {
+    cat("  Warning:", colname_i, "has only", unique_pos_count, "unique POS values, insufficient for 8th degree polynomial smoothing.\n")
+    # Optionally, skip the geom_smooth part or use a lower degree polynomial
+    # For now, we'll proceed without geom_smooth if there are insufficient points
+    use_smooth <- FALSE
+  } else {
+    use_smooth <- TRUE
+  }
+
+  # Prepare the base plot
+  p <- ggplot(data = plot_data) +
     facet_grid(~CHROM, scales = "free_x", space = "free_x") +
     ylim(0, 1) +
     ggtitle(paste(colname_i, "raw allele frequency plot")) +
     geom_hline(yintercept=0.5, linetype="dashed",  color = "black") +
-    geom_point(aes_string(x = "POS", y = colname_i), color = "#3933ff", size = 0.5, alpha = 0.9) +
-    geom_smooth(aes_string(x = "POS", y = colname_i), method = "lm", formula = y ~ poly(x,8), se = TRUE, color = "red")
-  
+    geom_point(aes_string(x = "POS", y = colname_i), color = "#3933ff", size = 0.5, alpha = 0.9)
+
+  # Add smoothing line only if conditions are met
+  if (use_smooth) {
+    p <- p + geom_smooth(aes_string(x = "POS", y = colname_i), method = "lm", formula = y ~ poly(x,8), se = TRUE, color = "red")
+  } else {
+    cat("  Skipping polynomial smoothing for", colname_i, "due to insufficient data points.\n")
+  }
+
+  # Try to set x-axis breaks and labels, handle potential errors
+  tryCatch({
+    # Calculate breaks - ensure max(POS) > 0 to avoid log10(0) or log10(negative)
+    max_pos <- max(plot_data$POS)
+    if (max_pos > 0) {
+      calculated_breaks <- seq(
+        from = 0,
+        to = max_pos,
+        by = 10^(floor(log10(max_pos)))
+      )
+      # Only apply breaks if the sequence is not empty or trivially short
+      if (length(calculated_breaks) > 1) {
+        p <- p + scale_x_continuous(
+          breaks = calculated_breaks,
+          labels = format_genomic()
+        )
+      } else {
+        # If calculated breaks are too few, let ggplot handle it automatically
+        cat("  Using default x-axis breaks for", colname_i, "due to low max POS.\n")
+      }
+    } else {
+      # If max POS is 0 or negative, let ggplot handle it automatically
+      cat("  Using default x-axis breaks for", colname_i, "due to non-positive max POS.\n")
+    }
+  }, error = function(e) {
+    # If scale_x_continuous fails for any reason, warn and proceed with defaults
+    cat("  Warning: Could not set custom x-axis breaks for", colname_i, ":", conditionMessage(e), "\n")
+    # ggplot will use defaults if scale_x_continuous is not added or fails within tryCatch
+  })
+
   # Save each plot to a PDF file
-  ggsave(filename = paste0(input_file_base, ".", colname_i, "raw.pdf"), plot = p, width=30, height=6)
+  plot_filename <- paste0(input_file_base, ".", colname_i, "raw.pdf")
+  cat("  Saving plot to:", plot_filename, "\n")
+  ggsave(filename = plot_filename, plot = p, width=30, height=6)
+
+  # Optional: Print a message if the plot was saved successfully
+  # (ggsave usually doesn't print an error message if it fails within Rscript, but the tryCatch above helps catch scale_x_continuous issues)
 }
+
+cat("R script completed successfully.\n")

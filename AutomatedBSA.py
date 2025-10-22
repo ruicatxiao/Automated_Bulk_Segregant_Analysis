@@ -6,32 +6,29 @@ import subprocess
 import os
 import logging
 import sys
+import shutil # Add this import
 from pyfiglet import Figlet
 import pandas as pd
 from pathlib import Path
 from colorama import init, Fore, Style
 from tqdm import tqdm
 
-
-# v2 script, has not tested yet
+# v4 script, debugged, tested working in conda, direct and singularity
 
 def setup_logging():
-    # Initialize colorama
     init(autoreset=True)
     
     logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)  # Set root logger level to DEBUG
+    logger.setLevel(logging.DEBUG) 
 
     # Formatter for logs
     formatter = logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s')
 
-    # File handler - logs all messages
     file_handler = logging.FileHandler("AutomatedBSA.log")
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
-    # Console handler - logs INFO and above
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(formatter)
@@ -67,7 +64,6 @@ def run_command(command, shell=False, pbar=None, update_pbar=True):
             stderr=subprocess.STDOUT,
             text=True
         )
-        # Stream output to screen and log
         for line in process.stdout:
             print(line, end='')
             logging.debug(line.strip())
@@ -105,6 +101,29 @@ def parse_arguments():
     )
     return parser.parse_args()
 
+def check_required_tools():
+    """
+    Checks if all required tools are available in the system PATH.
+    Exits the script if any tool is missing.
+    """
+    required_tools = [
+        "bwa", "samtools", "gatk", "trim_galore", "vcffilter", "Rscript", "python3"
+    ]
+    missing_tools = []
+
+    logging.info("Checking for required tools...")
+    for tool in required_tools:
+        if not shutil.which(tool):
+            missing_tools.append(tool)
+            logging.error(f"Required tool not found in PATH: {tool}")
+
+    if missing_tools:
+        logging.critical(f"Critical Error: The following required tools are missing: {', '.join(missing_tools)}")
+        print(f"{Fore.RED}Critical Error: The following required tools are missing: {', '.join(missing_tools)}{Style.RESET_ALL}")
+        sys.exit(1)
+    else:
+        logging.info("All required tools are available in PATH.")
+
 
 def read_samplesheet(samplesheet_path):
     logging.info(f"Reading samplesheet from {samplesheet_path}")
@@ -133,23 +152,34 @@ def trim_reads(df, output_dir, threads, pbar):
         read1 = Path(row['read1'])
         read2 = Path(row['read2'])
         trimmed_out = output_dir / 'trimmed'
-        command = [
-            "trim_galore",
-            "--cores", str(threads),
-            "--paired",
-            "--fastqc",
-            "--gzip",
-            "-o", str(trimmed_out),
-            str(read1),
-            str(read2)
-        ]
-        run_command(command, pbar=pbar)
-        # Assuming Trim Galore appends '_val_1.fq.gz' and '_val_2.fq.gz' to the original filenames
-        trimmed_r1 = read1.name.replace(".fastq.gz", "_val_1.fq.gz")
-        trimmed_r2 = read2.name.replace(".fastq.gz", "_val_2.fq.gz")
-        trimmed_read1.append(str(trimmed_out / trimmed_r1))
-        trimmed_read2.append(str(trimmed_out / trimmed_r2))
-        logging.info(f"Trimmed reads for sample {sample}: {trimmed_r1}, {trimmed_r2}")
+        
+        expected_trimmed_r1_name = read1.name.replace(".fastq.gz", "_val_1.fq.gz")
+        expected_trimmed_r2_name = read2.name.replace(".fastq.gz", "_val_2.fq.gz")
+        expected_trimmed_r1_path = trimmed_out / expected_trimmed_r1_name
+        expected_trimmed_r2_path = trimmed_out / expected_trimmed_r2_name
+
+        if expected_trimmed_r1_path.exists() and expected_trimmed_r1_path.stat().st_size > 0 and \
+           expected_trimmed_r2_path.exists() and expected_trimmed_r2_path.stat().st_size > 0:
+            logging.info(f"Trimmed files for sample {sample} already exist and are non-empty. Skipping trimming.")
+            trimmed_read1.append(str(expected_trimmed_r1_path))
+            trimmed_read2.append(str(expected_trimmed_r2_path))
+        else:
+            command = [
+                "trim_galore",
+                "--cores", str(threads),
+                "--paired",
+                "--fastqc",
+                "--gzip",
+                "-o", str(trimmed_out),
+                str(read1),
+                str(read2)
+            ]
+            run_command(command, pbar=pbar)
+
+            trimmed_read1.append(str(expected_trimmed_r1_path))
+            trimmed_read2.append(str(expected_trimmed_r2_path))
+
+        logging.info(f"Trimmed reads for sample {sample}: {expected_trimmed_r1_path}, {expected_trimmed_r2_path}")
     df['trimmed_read1'] = trimmed_read1
     df['trimmed_read2'] = trimmed_read2
     return df
@@ -167,87 +197,128 @@ def index_reference(ref_genome, output_dir, pbar):
     """
     logging.info(f"Indexing reference genome: {ref_genome}")
 
-    # 1) Remove any existing index files for this reference
-    # Typical index files: *.fai, *.sa, *.amb, *.ann, *.pac, *.bwt
-    # GATK dict file typically ends in .dict (with the base name of the ref genome)
-    files_to_delete = [
-        f"{ref_genome}.fai",
-        f"{ref_genome}.sa",
-        f"{ref_genome}.amb",
-        f"{ref_genome}.ann",
-        f"{ref_genome}.pac",
-        f"{ref_genome}.bwt",
-        str(ref_genome.with_suffix('')) + ".dict"  # e.g. genome.fasta -> genome.dict
+    ref_path = Path(ref_genome).resolve()
+    logging.info(f"Resolved reference path: {ref_path}")
+
+    index_extensions_to_remove = [
+        '.fai', '.sa', '.amb', '.ann', '.pac', '.bwt', '.dict'
     ]
 
-    for fpath in files_to_delete:
+    for ext in index_extensions_to_remove:
+
+        if ext == '.dict':
+            fpath = ref_path.with_suffix(ext)
+        else:
+
+            fpath = str(ref_path) + ext
         f = Path(fpath)
         if f.exists():
             logging.info(f"Removing old index file: {f}")
             f.unlink()
 
-    # 2) Perform indexing
-    # bwa index
-    run_command(["bwa", "index", str(ref_genome)], pbar=pbar)
-    # samtools faidx
-    run_command(["samtools", "faidx", str(ref_genome)], pbar=pbar)
-    # gatk CreateSequenceDictionary
-    run_command([
+
+    bwa_index_command = ["bwa", "index", str(ref_path)]
+    logging.info(f"Running BWA index: {' '.join(bwa_index_command)}")
+    run_command(bwa_index_command, pbar=pbar)
+
+
+    samtools_faidx_command = ["samtools", "faidx", str(ref_path)]
+    logging.info(f"Running samtools faidx: {' '.join(samtools_faidx_command)}")
+    run_command(samtools_faidx_command, pbar=pbar)
+
+ 
+    gatk_dict_command = [
         "gatk", "CreateSequenceDictionary",
-        "-R", str(ref_genome)
-    ], pbar=pbar)
-    # Increment progress bar for indexing
-    # Assuming each command is one task
-    # If multiple commands are considered as separate tasks, adjust accordingly
-    # Here, already incremented in run_command
+        "-R", str(ref_path) 
+    ]
+    logging.info(f"Running GATK CreateSequenceDictionary: {' '.join(gatk_dict_command)}")
+    run_command(gatk_dict_command, pbar=pbar)
+
 
 
 def map_reads(df, ref_genome, output_dir, threads, pbar):
+    """
+    Maps trimmed reads to the reference genome using BWA MEM.
+    Uses the absolute path of the reference genome file (without extension)
+    as the idxbase for BWA.
+    """
     logging.info("Starting read mapping with BWA MEM")
+
+    ref_path = Path(ref_genome).resolve() 
+
+
+    if not ref_path.exists():
+        logging.error(f"Reference genome file does not exist: {ref_path}")
+        sys.exit(1)
+
+
+    index_extensions = ['.amb', '.ann', '.bwt', '.pac', '.sa']
+    for ext in index_extensions:
+        idx_file = ref_path.with_suffix(ref_path.suffix + ext)
+        if not idx_file.exists():
+            logging.error(f"Required BWA index file does not exist: {idx_file}")
+            logging.error("Please ensure 'bwa index' was run successfully on the reference genome.")
+            sys.exit(1)
+    logging.info("All required BWA index files found.")
+
     for idx, row in df.iterrows():
         sample = row['sampleName']
-        trimmed_r1 = Path(row['trimmed_read1'])
-        trimmed_r2 = Path(row['trimmed_read2'])
-        rg = f"@RG\tID:{sample}\tLB:{sample}\tPL:ILLUMINA\tPM:HISEQ\tSM:{sample}"
+        trimmed_r1 = Path(row['trimmed_read1']).resolve() 
+        trimmed_r2 = Path(row['trimmed_read2']).resolve() 
+        
+        rg = f"@RG\\tID:{sample}\\tLB:{sample}\\tPL:ILLUMINA\\tPM:HISEQ\\tSM:{sample}"
+
         sam_output = output_dir / 'sam_bam' / f"{sample}.sam"
+
+
+        if sam_output.exists() and sam_output.stat().st_size > 0:
+            logging.info(f"SAM file for sample {sample} already exists and is non-empty. Skipping mapping.")
+            pbar.update(1) 
+            continue 
+
+
         command = [
             "bwa", "mem",
             "-t", str(threads),
             "-M", 
             "-R", rg, 
-            str(ref_genome), 
+            str(ref_path),  
             str(trimmed_r1), 
-            str(trimmed_r2) 
+            str(trimmed_r2)  
         ]
         
-        logging.info(f"Running command for sample {sample}: {' '.join(command)}")
+        logging.info(f"Running BWA MEM command for sample {sample}")
+        logging.debug(f"Command: {' '.join(command)}") 
+        
         try:
-            process = subprocess.Popen(
+
+            result = subprocess.run(
                 command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True
+                text=True,
+                check=True #
             )
 
             with open(sam_output, 'w') as f:
-                for line in process.stdout:
-                    f.write(line)
-                _, stderr_output = process.communicate() 
-
-            if process.returncode != 0:
-                logging.error(f"BWA MEM failed for sample {sample}:\n{stderr_output}")
-                logging.debug(f"Failed command was: {' '.join(command)}")
-                sys.exit(1)
+                f.write(result.stdout)
             
             logging.info(f"Mapped reads for sample {sample}, SAM saved to {sam_output}")
             
+        except subprocess.CalledProcessError as e:
+
+            error_output = e.stderr if e.stderr else "No stderr output captured."
+            logging.error(f"BWA MEM failed for sample {sample} (Return code {e.returncode}):\n{error_output}")
+            logging.debug(f"Failed command was: {' '.join(command)}")
+            sys.exit(1) 
         except Exception as e:
-            logging.error(f"Exception occurred while running BWA MEM for sample {sample}: {e}")
+
+            logging.error(f"Unexpected exception occurred while running BWA MEM for sample {sample}: {e}")
             logging.debug(f"Failed command was: {' '.join(command)}")
             sys.exit(1)
             
         if pbar:
-            pbar.update(1)
+            pbar.update(1) 
 
 
 def convert_sort_bam(df, output_dir, threads, pbar):
@@ -258,20 +329,30 @@ def convert_sort_bam(df, output_dir, threads, pbar):
         bam_file = output_dir / 'sam_bam' / f"{sample}.bam"
         sorted_bam = output_dir / 'sam_bam' / f"{sample}.sorted.bam"
         
-        # samtools view
-        command_view = [
-            "samtools", "view",
-            "-h",
-            "-@", str(threads),
-            "-S",
-            "-b",
-            str(sam_file),
-            "-o", str(bam_file)
-        ]
-        run_command(command_view, pbar=pbar)
-        logging.info(f"Converted SAM to BAM for sample {sample}, BAM saved to {bam_file}")
+
+        if sorted_bam.exists() and sorted_bam.stat().st_size > 0:
+            logging.info(f"Sorted BAM file for sample {sample} already exists and is non-empty. Skipping conversion and sorting.")
+            pbar.update(2) 
+            continue 
         
-        # samtools sort
+        intermediate_bam_exists = bam_file.exists() and bam_file.stat().st_size > 0
+
+        if not intermediate_bam_exists:
+            command_view = [
+                "samtools", "view",
+                "-h",
+                "-@", str(threads),
+                "-S",
+                "-b",
+                str(sam_file),
+                "-o", str(bam_file)
+            ]
+            run_command(command_view, pbar=pbar)
+            logging.info(f"Converted SAM to BAM for sample {sample}, BAM saved to {bam_file}")
+        else:
+            logging.info(f"Intermediate BAM file for sample {sample} already exists and is non-empty. Skipping SAM to BAM conversion.")
+            pbar.update(1) 
+
         command_sort = [
             "samtools", "sort",
             "-@", str(threads),
@@ -289,6 +370,12 @@ def mark_duplicates(df, output_dir, pbar):
         sorted_bam = output_dir / 'sam_bam' / f"{sample}.sorted.bam"
         final_bam = output_dir / 'sam_bam' / f"{sample}.final.bam"
         metrics = output_dir / 'sam_bam' / f"{sample}_dup_metrics.txt"
+        
+        if final_bam.exists() and final_bam.stat().st_size > 0:
+            logging.info(f"Final BAM file for sample {sample} already exists and is non-empty. Skipping duplicate marking.")
+            pbar.update(1)
+            continue 
+
         command = [
             "gatk", "MarkDuplicates",
             "-I", str(sorted_bam),
@@ -304,6 +391,12 @@ def index_bam(df, output_dir, pbar):
     for idx, row in df.iterrows():
         sample = row['sampleName']
         final_bam = output_dir / 'sam_bam' / f"{sample}.final.bam"
+        bai_file = final_bam.with_suffix(final_bam.suffix + '.bai') 
+        if bai_file.exists() and bai_file.stat().st_size > 0:
+            logging.info(f"BAM index file for sample {sample} already exists and is non-empty. Skipping indexing.")
+            pbar.update(1)
+            continue
+
         command = [
             "samtools", "index",
             str(final_bam)
@@ -400,11 +493,9 @@ def filter_parent_snps(output_dir, pbar):
     input_vcf = output_dir / 'work_vcf' / 'p.SNP.vcf'
     output_vcf = output_dir / 'work_vcf' / 'p.SNP.hardfilter.vcf'
     
-    # Define filter expressions
     info_filter = "QD > 2.0 & FS < 60.0 & SOR < 3.0"
     genotype_filter = "DP > 10 & GQ > 90"
     
-    # Construct the vcffilter command
     command = [
         "vcffilter",
         "-f", info_filter,
@@ -458,9 +549,8 @@ def select_biallelic_variants(ref_genome, output_dir, pbar):
 def plot_snp_distribution(output_dir, ref_genome, pbar):
     logging.info("Plotting SNP distribution with scatter_plot_snp_location.py")
     vcf_file = output_dir / 'work_vcf' / 'p.SNP.valid.vcf'
-    fai_file = Path(ref_genome).with_suffix('.fasta.fai')
+    fai_file = Path(str(ref_genome) + ".fai")
 
-    # Build script path next to this Python file
     script_path = Path(__file__).parent / 'scatter_plot_snp_location.py'
     
     command = [
@@ -584,7 +674,6 @@ def run_post_processing(output_dir, pbar):
     logging.info("Running post-processing with BSA_R_Preprocessing.R")
     table_file = output_dir / 'tables' / 'FINAL_SNP_filtered.tsv'
 
-    # Build script path next to this Python file
     script_path = Path(__file__).parent / 'BSA_R_Preprocessing.R'
     
     command = [
@@ -605,7 +694,7 @@ def organize_output_files(output_dir, pbar):
     plots_dir = output_dir / 'plots'
 
     try:
-        # Move all .tsv files to the 'tables' folder
+
         tsv_files = list(output_dir.rglob("*.tsv"))
         if tsv_files:
             for tsv in tsv_files:
@@ -617,7 +706,7 @@ def organize_output_files(output_dir, pbar):
         else:
             logging.info("No .tsv files found to move.")
 
-        # Move all .pdf files to the 'plots' folder
+
         pdf_files = list(output_dir.rglob("*.pdf"))
         if pdf_files:
             for pdf in pdf_files:
@@ -636,6 +725,12 @@ def organize_output_files(output_dir, pbar):
         logging.error(f"An error occurred while organizing output files: {e}")
         sys.exit(1)
 
+def print_colored_goodbye():
+    f = Figlet(font='slant')
+    goodbye_text = 'ABSA COMPLETE - GOODBYE!'
+    splash = f.renderText(goodbye_text)
+    colored_splash = Fore.GREEN + splash
+    print(colored_splash)
 
 def main():
     setup_logging()
@@ -658,19 +753,22 @@ def main():
         logging.error(f"Samplesheet not found at {samplesheet}")
         sys.exit(1)
 
+    # Check for required tools before proceeding
+    check_required_tools()
     create_directories(output_dir)
-
     df = read_samplesheet(samplesheet)
     num_samples = len(df)
     logging.info(f"Number of samples to process: {num_samples}")
 
-    # Calculate total tasks: 6 per sample + 16 non-sample steps
-    total_tasks = 6 * num_samples + 16
+    # Calculate total tasks: 6 per sample + 18 non-sample steps (index_reference is now 3 steps counted separately)
+    # Original calculation was 6 per sample + 16 fixed steps. Indexing now counts 3 steps in run_command.
+    # So it's 6 per sample + (16 - 1 + 3) = 6 * num_samples + 18
+    total_tasks = 6 * num_samples + 18
 
     with tqdm(total=total_tasks, desc='Automated BSA Progress', unit='task') as pbar:
         df = trim_reads(df, output_dir, THREADS, pbar)
-        index_reference(ref_genome, output_dir, pbar)
-        map_reads(df, ref_genome, output_dir, THREADS, pbar)
+        index_reference(ref_genome, output_dir, pbar) 
+        map_reads(df, ref_genome, output_dir, THREADS, pbar) 
         convert_sort_bam(df, output_dir, THREADS, pbar)
         mark_duplicates(df, output_dir, pbar)
         index_bam(df, output_dir, pbar)
@@ -682,8 +780,8 @@ def main():
         filter_parent_snps(output_dir, pbar)
         select_biallelic_variants(ref_genome, output_dir, pbar)
         plot_snp_distribution(output_dir, ref_genome, pbar)
-        create_vcf_list(output_dir, pbar)
-        merge_all_vcfs(ref_genome, create_vcf_list(output_dir, pbar), output_dir, pbar)
+        vcf_list_path = create_vcf_list(output_dir, pbar) 
+        merge_all_vcfs(ref_genome, vcf_list_path, output_dir, pbar) 
         genotype_combined_vcf(ref_genome, output_dir, pbar)
         select_bulk_snps(ref_genome, output_dir, pbar)
         filter_bulk_snps(ref_genome, output_dir, pbar)
@@ -691,7 +789,9 @@ def main():
         run_post_processing(output_dir, pbar)
         organize_output_files(output_dir, pbar)
 
-    logging.info("Automated BSA Workflow Completed Successfully, Goodbye Now ~ ")
+    print_colored_goodbye() 
+    print(f"{Fore.GREEN}ABSA has completed successfully, Goodbye!{Style.RESET_ALL}")
+    logging.info("Successfully completed full pipeline ")
 
 
 if __name__ == "__main__":
