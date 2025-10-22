@@ -8,6 +8,8 @@ Automated Bulk Segregant Analysis (ABSA) is a pipeline designed to streamline th
 
 Version update Jan-30-2025: now added singularity installation instructions, which takes care of all depdendency issues by constructing singulatity image. 
 
+Version update Oct-22-2025: Release v0.2. Added Conda installation instructions, Conda installation has been tested on both Linux and macOS. In addition, we improved overall pipeline robustness by better input file extension handling. We also added resuming from prior run, allowing cumulative output
+
 ```text
     ___   __  ____________  __  ______  ________________ 
    /   | / / / /_  __/ __ \/  |/  /   |/_  __/ ____/ __ \
